@@ -1,0 +1,58 @@
+{
+  "format": 1,
+  "restore": {
+    "D:\\Users\\aguil\\Desktop\\TEC Files\\9 - IS 2022\\Bases de Datos II GR1\\Evaluaciones\\TEC_CR_Databases_II_Cases_2022\\Case_1\\src\\dotnetServer\\dotnetServer.csproj": {}
+  },
+  "projects": {
+    "D:\\Users\\aguil\\Desktop\\TEC Files\\9 - IS 2022\\Bases de Datos II GR1\\Evaluaciones\\TEC_CR_Databases_II_Cases_2022\\Case_1\\src\\dotnetServer\\dotnetServer.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Users\\aguil\\Desktop\\TEC Files\\9 - IS 2022\\Bases de Datos II GR1\\Evaluaciones\\TEC_CR_Databases_II_Cases_2022\\Case_1\\src\\dotnetServer\\dotnetServer.csproj",
+        "projectName": "dotnetServer",
+        "projectPath": "D:\\Users\\aguil\\Desktop\\TEC Files\\9 - IS 2022\\Bases de Datos II GR1\\Evaluaciones\\TEC_CR_Databases_II_Cases_2022\\Case_1\\src\\dotnetServer\\dotnetServer.csproj",
+        "packagesPath": "C:\\Users\\aguil\\.nuget\\packages\\",
+        "outputPath": "D:\\Users\\aguil\\Desktop\\TEC Files\\9 - IS 2022\\Bases de Datos II GR1\\Evaluaciones\\TEC_CR_Databases_II_Cases_2022\\Case_1\\src\\dotnetServer\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\aguil\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netcoreapp3.1"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netcoreapp3.1": {
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netcoreapp3.1": {
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.416\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
