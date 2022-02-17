@@ -73,8 +73,6 @@ GO
 
 -- Database Tables Population
 
-
-
 IF NOT EXISTS( SELECT id FROM [dbo].[PoliticParties])
 BEGIN
 	INSERT INTO [dbo].[PoliticParties] (name, flagPictureUrl)
@@ -99,6 +97,8 @@ BEGIN
 	);
 END
 GO
+
+SELECT * FROM PoliticParties;
 
 IF NOT EXISTS( SELECT id FROM [dbo].[CampaignManagers])
 BEGIN
