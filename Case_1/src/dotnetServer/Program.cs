@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Threading;
+
 namespace dotnetServer
 {
     class Program
@@ -7,6 +9,7 @@ namespace dotnetServer
         static void Main(string[] args)
         {
             new Program().bringPoliticParties();
+            new Program().startThreads();
         }
         public void bringPoliticParties()
         {
@@ -36,6 +39,31 @@ namespace dotnetServer
             finally
             {
                 con.Close();
+            }
+        }
+
+        public void startThreads()
+        {
+            //Thread thrName = new Thread(new ThreadStart(function name));
+            Thread thr = new Thread(new ThreadStart(new Program().testThread));
+            Thread thr2 = new Thread(new ThreadStart(new Program().testThread2));
+            thr.Start();
+            Console.WriteLine("First Thread has done");
+            thr2.Start();
+        }
+
+        public void testThread()
+        {
+            for (int z = 0; z < 10; z++) {
+                Console.WriteLine("First Thread");
+                Thread.Sleep(2000);
+            }
+        }
+        public void testThread2()
+        {
+            for (int z = 0; z < 10; z++) {
+                Console.WriteLine("Second Thread");
+                Thread.Sleep(2000);
             }
         }
     }
