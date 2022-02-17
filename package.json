@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "@types/mssql": "^7.1.4",
+    "@types/node": "^17.0.18"
+  },
+  "dependencies": {
+    "mssql": "^8.0.2"
+  }
+}
