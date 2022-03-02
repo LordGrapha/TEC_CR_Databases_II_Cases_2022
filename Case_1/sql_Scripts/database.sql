@@ -293,6 +293,27 @@ BEGIN
 	END')
 END
 
+IF object_id('Query3') IS NULL
+BEGIN
+	EXEC('CREATE PROCEDURE [dbo].[Query3]
+	AS
+	BEGIN
+		SELECT p.name as PoliticParty,
+			a.action as Action,
+			[dbo].getMinCanton(a.id) as MinCanton,
+			[dbo].getMinCantonDelivs(a.id) as deliverables,
+			[dbo].getMaxCanton(a.id) as MaxCanton,
+			[dbo].getMaxCantonDelivs(a.id) as deliverables
+	FROM PoliticParties as p
+		INNER JOIN dbo.Actions as a ON p.id = a.politicPartyId
+		GROUP BY p.name, a.id, a.action, a.politicPartyId
+		ORDER BY a.id
+	END')
+END
+
+-- Query 1
+EXEC dbo.Query1 'Abangares'
+
 --Query 2
 DECLARE @topPoliticParties INT 
 SELECT @topPoliticParties = FLOOR(COUNT(id) * 0.25) FROM [dbo].[PoliticParties]
@@ -301,6 +322,82 @@ SELECT c.name, COUNT(d.id) as deliverables FROM Cantons as c
 	INNER JOIN [dbo].[Deliverables] as d ON cxd.deliverableid = d.id
 	WHERE c.politicPartiesSupport <= (SELECT FLOOR(COUNT(id) * 0.25) FROM [dbo].[PoliticParties])
 	GROUP BY c.name
+
+IF object_id('getMinCanton', 'FN') IS NULL
+BEGIN
+    EXEC('CREATE FUNCTION [dbo].[getMinCanton] (
+	@actionid INT
+	)
+	RETURNS VARCHAR(63) AS
+	BEGIN
+		DECLARE	@return_value VARCHAR(63)
+
+		SELECT TOP 1 @return_value = c.name FROM dbo.Cantons as c
+			INNER JOIN dbo.CantonsXDeliverables as cxd ON cxd.cantonId = c.id
+			INNER JOIN dbo.Deliverables as d ON cxd.cantonId = d.id
+			INNER JOIN dbo.Actions as a ON d.actionId = a.id
+			WHERE a.id = @actionid
+			ORDER BY c.deliverables ASC
+		RETURN @return_value
+	END')
+END
+
+IF object_id('getMinCantonDelivs', 'FN') IS NULL
+BEGIN
+    EXEC('CREATE FUNCTION [dbo].[getMinCantonDelivs] (
+	@actionid INT
+	)
+	RETURNS INT AS
+	BEGIN
+		DECLARE	@return_value INT
+
+		SELECT TOP 1 @return_value = c.deliverables FROM dbo.Cantons as c
+			INNER JOIN dbo.CantonsXDeliverables as cxd ON cxd.cantonId = c.id
+			INNER JOIN dbo.Deliverables as d ON cxd.cantonId = d.id
+			INNER JOIN dbo.Actions as a ON d.actionId = a.id
+			WHERE a.id = @actionid
+			ORDER BY c.deliverables ASC
+		RETURN @return_value
+	END')
+END
+
+IF object_id('getMaxCanton', 'FN') IS NULL
+BEGIN
+    EXEC('CREATE FUNCTION [dbo].[getMaxCanton] (
+	@actionid INT
+	)
+	RETURNS VARCHAR(63) AS
+	BEGIN
+		DECLARE	@return_value VARCHAR(63)
+
+		SELECT TOP 1 @return_value = c.name FROM dbo.Cantons as c
+			INNER JOIN dbo.CantonsXDeliverables as cxd ON cxd.cantonId = c.id
+			INNER JOIN dbo.Deliverables as d ON cxd.cantonId = d.id
+			INNER JOIN dbo.Actions as a ON d.actionId = a.id
+			WHERE a.id = @actionid
+			ORDER BY c.deliverables DESC
+		RETURN @return_value
+	END')
+END
+
+IF object_id('getMaxCantonDelivs', 'FN') IS NULL
+BEGIN
+    EXEC('CREATE FUNCTION [dbo].[getMaxCantonDelivs] (
+	@actionid INT
+	)
+	RETURNS INT AS
+	BEGIN
+		DECLARE	@return_value INT
+
+		SELECT TOP 1 @return_value = c.deliverables FROM dbo.Cantons as c
+			INNER JOIN dbo.CantonsXDeliverables as cxd ON cxd.cantonId = c.id
+			INNER JOIN dbo.Deliverables as d ON cxd.cantonId = d.id
+			INNER JOIN dbo.Actions as a ON d.actionId = a.id
+			WHERE a.id = @actionid
+			ORDER BY c.deliverables DESC
+		RETURN @return_value
+	END')
+END
 
 -- Query 3
 SELECT p.name as PoliticParty,
