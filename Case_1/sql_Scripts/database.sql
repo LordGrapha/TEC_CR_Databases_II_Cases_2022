@@ -89,8 +89,6 @@ BEGIN
 		'https://i.ibb.co/tzhKTmM/Bandera-Partido-Restauraci-n-Nacional-Costa-Rica-2022-svg.png')
 END
 
-SELECT * FROM PoliticParties;
-
 IF NOT EXISTS( SELECT id FROM [dbo].[CampaignManagers])
 BEGIN
 	INSERT INTO [dbo].[CampaignManagers] (bio, pictureUrl, politicPartyId)
@@ -234,11 +232,11 @@ BEGIN
 		-- For each Deliverable for each Action for each Politic Party
 		WHILE @quantitydeliverables > 0
 		BEGIN
-			IF RAND() > 0.7 BEGIN
+			IF RAND() > 0.5 BEGIN
 				-- Pick random id from ids in Cantons table
 				SELECT TOP 1 @cantonid = id FROM dbo.Cantons ORDER BY NEWID()
 			END ELSE BEGIN
-				SELECT @cantonid = RAND()*(4-1)+1; 
+				SELECT @cantonid = RAND()*(33-1)+1; 
 			END
 
 			-- Insert random deliverable for current Action in current Politic Party
@@ -301,7 +299,7 @@ SELECT @topPoliticParties = FLOOR(COUNT(id) * 0.25) FROM [dbo].[PoliticParties]
 SELECT c.name, COUNT(d.id) as deliverables FROM Cantons as c
 	INNER JOIN [dbo].[CantonsXDeliverables] as cxd ON c.id = cxd.cantonId
 	INNER JOIN [dbo].[Deliverables] as d ON cxd.deliverableid = d.id
-	WHERE @topPoliticParties >= c.politicPartiesSupport
+	WHERE c.politicPartiesSupport <= (SELECT FLOOR(COUNT(id) * 0.25) FROM [dbo].[PoliticParties])
 	GROUP BY c.name
 
 -- Query 3

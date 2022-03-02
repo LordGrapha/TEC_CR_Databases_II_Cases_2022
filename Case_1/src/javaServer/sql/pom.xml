@@ -20,7 +20,14 @@
 
   <dependencies>
 
-    
+    <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>31.0.1-jre</version>
+    </dependency>
+
+
 
     <dependency>
       <groupId>junit</groupId>
@@ -46,15 +53,14 @@
       <groupId>com.microsoft.sqlserver</groupId>
       <artifactId>mssql-jdbc</artifactId>
       <version>10.2.0.jre11</version>
-  </dependency>
+    </dependency>
 
-		<!-- https://mvnrepository.com/artifact/c3p0/c3p0 -->
-		<dependency>
-			<groupId>c3p0</groupId>
-			<artifactId>c3p0</artifactId>
-			<version>0.9.1.2</version>
-		</dependency>
-
+    <!-- https://mvnrepository.com/artifact/c3p0/c3p0 -->
+    <dependency>
+      <groupId>c3p0</groupId>
+      <artifactId>c3p0</artifactId>
+      <version>0.9.1.2</version>
+    </dependency>
 
   </dependencies>
 
@@ -103,4 +109,21 @@
       </plugins>
     </pluginManagement>
   </build>
+
+
+  <dependencyManagement>
+  
+
+    <dependencies>
+    
+
+      <dependency>
+        <groupId>org.jboss.logging</groupId>
+        <artifactId>jboss-logging</artifactId>
+        <version>3.3.2.Final</version>
+      </dependency>
+
+    </dependencies>
+
+  </dependencyManagement>
 </project>

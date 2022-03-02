@@ -11,7 +11,8 @@
     <Compile Include="Model/Cantons.cs"/>  
     <Compile Include="Model/CantonsXDeliverables.cs"/>  
     <Compile Include="Model/Deliverables.cs"/>  
-    <Compile Include="Model/PoliticParties.cs"/>  
+    <Compile Include="Model/PoliticParties.cs"/>
+    <Compile Include="Controllers/AdoController.cs"/>
   </ItemGroup>
 
 </Project>
