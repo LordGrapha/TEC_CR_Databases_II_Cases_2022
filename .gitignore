@@ -4,3 +4,5 @@ Case_1/src/dotnetServer/obj
 Case_1/src/dotnetServer/bin
 node_modules
 Case_1/src/javaServer/sql/target
+Case_2/node_modules
+Case_2/*.js

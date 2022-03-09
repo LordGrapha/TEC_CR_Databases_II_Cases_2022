@@ -1,4 +1,4 @@
-import mssql, { Promise } from 'mssql';
+import * as mssql from 'mssql';
 import Timer from '../util/Timer';
 
 export default class SqlProvider{
