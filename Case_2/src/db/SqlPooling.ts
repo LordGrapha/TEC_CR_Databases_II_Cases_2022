@@ -8,7 +8,7 @@ export class SqlProvider{
 
     constructor(){
         this.config = {
-            server: "localhost", // or "localhost"
+            server: "localhost", // or "localhost" or "25.8.65.60"
             options: {
                 database : "Case_1",
                 trustServerCertificate : true,
