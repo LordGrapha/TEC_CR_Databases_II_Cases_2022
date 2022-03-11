@@ -429,14 +429,47 @@ SELECT * FROM KPIs
 --Sql StoredProcedures
 
 -- Endpoint 1
-
-
+SELECT C.name, COUNT(D.id) FROM Cantons C
+INNER JOIN CantonsXDeliverables CD
+ON CD.cantonId = C.id
+INNER JOIN Deliverables D
+ON D.deliverableid = CD.deliverableid
+WHERE (DATEDIFF(DAY, '03/07.2022', D.date) <= 100)
+EXCEPT
+SELECT C.name, COUNT(D.id) FROM Cantons C
+INNER JOIN CantonsXDeliverables CD
+ON CD.cantonId = C.id
+INNER JOIN Deliverables D
+ON D.deliverableid = CD.deliverableid
+WHERE (DATEDIFF(DAY, DATEADD(DAY, '03/07.2022', 700), D.date) <= 100) AND COUNT(D.id) != 0 -- ocupa mejora \\
 
 -- Endpoint 2
+DECLARE @pAccion INT;
+DECLARE @pPartido INT;
 
-
+SELECT PT.Partido, PT.ActionID, PT.PrimerTercio, PT.SegundoTercio, PT.TercerTercio FROM (
+	SELECT P.id,
+		   A.id as ActionID, 
+		   C.name,
+		   P.name as Partido
+	FROM Cantons C
+	INNER JOIN Actions A
+	ON A.id = @pAccion
+	INNER JOIN PoliticParties P
+	ON P.id = @pPartido
+) DensidadCanton
+PIVOT (
+	COUNT(ActionID)
+	FOR Cantons
+	IN (
+		[PrimerTercio],
+		[SegundoTercio],
+		[TercerTercio]
+	)
+) AS PT
 
 -- Endpoint 3
+
 
 
 
