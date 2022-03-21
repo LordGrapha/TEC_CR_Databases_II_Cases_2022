@@ -428,24 +428,24 @@ SELECT * FROM KPIs
 
 --Sql StoredProcedures
 
--- Endpoint 1
---SELECT C.name, COUNT(D.id) FROM Cantons C
---INNER JOIN CantonsXDeliverables CD
---ON CD.cantonId = C.id
---INNER JOIN Deliverables D
---ON D.deliverableid = CD.deliverableid
---WHERE (DATEDIFF(DAY, '03/07.2022', D.date) <= 100)
---EXCEPT
---SELECT C.name, COUNT(D.id) FROM Cantons C
---INNER JOIN CantonsXDeliverables CD
---ON CD.cantonId = C.id
---INNER JOIN Deliverables D
---ON D.deliverableid = CD.deliverableid
---WHERE (DATEDIFF(DAY, DATEADD(DAY, '03/07.2022', 700), D.date) <= 100) AND COUNT(D.id) != 0 -- ocupa mejora \\
+---- Endpoint 1
+SELECT C.name, COUNT(D.deliverableid) FROM Cantons C
+INNER JOIN CantonsXDeliverables CD
+ON CD.cantonId = C.cantonid
+INNER JOIN Deliverables D
+ON D.deliverableid = CD.deliverableid
+WHERE (DATEDIFF(DAY, '03/07.2022', D.date) <= 100)
+EXCEPT
+SELECT C.name, COUNT(D.deliverableid) FROM Cantons C
+INNER JOIN CantonsXDeliverables CD
+ON CD.cantonId = C.cantonid
+INNER JOIN Deliverables D	
+ON D.deliverableid = CD.deliverableid
+WHERE (DATEDIFF(DAY, DATEADD(DAY, '03/07.2022', 700), D.date) <= 100) AND COUNT(D.deliverableid) != 0 -- ocupa mejora \\
 
 ---- Endpoint 2
---DECLARE @pAccion INT;
---DECLARE @pPartido INT;
+DECLARE @pAccion INT;
+DECLARE @pPartido INT;
 
 --SELECT PT.Partido, PT.ActionID, PT.PrimerTercio, PT.SegundoTercio, PT.TercerTercio FROM (
 --	SELECT P.id,
@@ -468,9 +468,52 @@ SELECT * FROM KPIs
 --	)
 --) AS PT
 
+SELECT [name], [action], Tercio1, Tercio2, Tercio3 FROM 
+	(SELECT P.[name], A.[action], D.rate,
+		'Tercio' + CAST(DENSE_RANK() OVER(ORDER BY CASE
+											WHEN D.rate <= 33 THEN 1
+											WHEN D.rate <= 66 THEN 2
+											WHEN D.rate <= 100 THEN 3
+											END ASC) AS VARCHAR(16)) AS RANGO
+	FROM PoliticParties P
+		INNER JOIN Actions A
+		ON A.politicpartyid = P.politicpartyid
+		INNER JOIN Deliverables D
+		ON D.politicPartyId = P.politicpartyid
+		INNER JOIN CantonsXDeliverables CD
+		ON CD.deliverableid = D.deliverableid
+		INNER JOIN Cantons C
+		ON C.cantonid = CD.cantonid
+	) AS RANGETABLE
+	PIVOT
+	(
+		COUNT(D.rate)
+		FOR RANGO IN 
+		( [Tercio1], [Tercio2], [Tercio3]
+		)
+	) AS PIVOTABLE
+
 -- Endpoint 3
 
+DECLARE @pEntrada VARCHAR(16);
 
+--SELECT [name], COUNT(deliverableId), [rank]
+--FROM 
+--  ( SELECT PP.[name], COUNT(deliverableId),
+--           RANK() OVER (PARTITION BY [name]
+--                              ORDER BY DATEPART(MONTH, D.[date]) DESC
+--                             )
+--             AS [rank]
+--    FROM PoliticParties PP
+--	INNER JOIN Deliverables D
+--	ON D.politicPartyId = PP.politicPartyId
+--  ) tmp 
+--WHERE [rank] <= 3 AND CONTAINS(D.[name], @pEntrada)
+--ORDER BY [name], [rank] ; 
+
+--SELECT * 
+--	FROM
+--	(SELECT	P.[name], [year], [month], percent)
 
 
 -- Endpoint 4
