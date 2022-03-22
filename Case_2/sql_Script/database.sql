@@ -480,21 +480,29 @@ SELECT [name], [action], Tercio1, Tercio2, Tercio3 FROM
 -- Endpoint 3
 
 DECLARE @pEntrada VARCHAR(16);
+DECLARE @pYear INT = (SELECT YEAR (DATEADD(DAY, '03/07.2022', 700)))
+DECLARE @pActualYear INT = (SELECT YEAR ('03/07.2022'))
 
-SELECT TOP 3 Año, Partido, Entregable, Counte, Mes, [rank]
-FROM 
-  ( SELECT DATEPART(YEAR, D.[date]) as Año, PP.[name] As Partido, D.[name] As Entregable, COUNT(D.deliverableId) as counte, MONTH(D.[date]) as Mes,
-           RANK() OVER (PARTITION BY PP.[name]
-                              ORDER BY DATEPART(MONTH, D.[date]) DESC
-                             )
-             AS [rank]
-    FROM PoliticParties PP
-	INNER JOIN Deliverables D
-	ON D.politicPartyId = PP.politicPartyId
-	GROUP BY D.date, PP.name, D.name
-  ) tmp 
---WHERE CONTAINS(Entregable, @pEntrada)
-ORDER BY Año; 
+WHILE @pYear != @pActualYear
+BEGIN
+	SELECT TOP 3 Año, Partido, Entregable, Counte, Mes, [rank]
+	FROM 
+	  ( SELECT DATEPART(YEAR, D.[date]) as Año, PP.[name] As Partido, D.[name] As Entregable, COUNT(D.deliverableId) as counte, MONTH(D.[date]) as Mes,
+			   RANK() OVER (PARTITION BY PP.[name]
+								  ORDER BY DATEPART(MONTH, D.[date]) DESC
+								 )
+				 AS [rank]
+		FROM PoliticParties PP
+		INNER JOIN Deliverables D
+		ON D.politicPartyId = PP.politicPartyId
+		GROUP BY D.date, PP.name, D.name
+	  ) tmp 
+	WHERE CONTAINS(Entregable, @pEntrada) AND Año = @pActualYear
+	ORDER BY Año; 
+
+	SET @pActualYear = (SELECT DATEADD(YEAR, @pActualYear, 1))
+
+END
 
 
 -- Endpoint 4
