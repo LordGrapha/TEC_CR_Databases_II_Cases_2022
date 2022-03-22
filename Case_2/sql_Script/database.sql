@@ -481,18 +481,19 @@ SELECT [name], [action], Tercio1, Tercio2, Tercio3 FROM
 
 DECLARE @pEntrada VARCHAR(16);
 
-SELECT TOP 3 Año, [name], counte, [rank]
+SELECT TOP 3 Año, Partido, Entregable, Counte, Mes, [rank]
 FROM 
-  ( SELECT DATEPART(YEAR, D.[date]) as Año, PP.[name], COUNT(D.deliverableId) as counte,
-           RANK() OVER (PARTITION BY [name]
+  ( SELECT DATEPART(YEAR, D.[date]) as Año, PP.[name] As Partido, D.[name] As Entregable, COUNT(D.deliverableId) as counte, MONTH(D.[date]) as Mes,
+           RANK() OVER (PARTITION BY PP.[name]
                               ORDER BY DATEPART(MONTH, D.[date]) DESC
                              )
              AS [rank]
     FROM PoliticParties PP
 	INNER JOIN Deliverables D
 	ON D.politicPartyId = PP.politicPartyId
+	GROUP BY D.date, PP.name, D.name
   ) tmp 
-WHERE CONTAINS([name], @pEntrada)
+--WHERE CONTAINS(Entregable, @pEntrada)
 ORDER BY Año; 
 
 --SELECT * 
@@ -649,8 +650,8 @@ Table value parameters, transactions, read committed, transaction error handling
 */
 
 
-/*
-Referencia Checpoint en clase:
+
+-- Referencia Checpoint en clase:
 
 -- Crea un User Defined Table Type
 CREATE TYPE EntregableTVP AS TABLE(id_entregable int, canton int, satisfaccion float)
@@ -707,4 +708,3 @@ SELECT id_entregable, canton, satisfaccion FROM @EntregableTVP;
 
 EXEC SaveEntregable 55,11,@EntregableTVP;
 
-*/
