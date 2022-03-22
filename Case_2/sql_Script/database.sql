@@ -380,11 +380,12 @@ BEGIN
 
 			-- Insert random deliverable for current Action in current Politic Party
 			SELECT TOP 1 @deliv_name = name FROM @LOCAL_DeliverableNames ORDER BY NEWID()
-			INSERT INTO dbo.Deliverables(actionId, politicPartyId, name, date) 
+			INSERT INTO dbo.Deliverables(actionId, politicPartyId, name, date, rate) 
 			VALUES (@actionid,
 					@politicpartyid,
 					@deliv_name,
-					DATEADD(dd, 700*RAND(), '03/07/2022')
+					DATEADD(dd, 700*RAND(), '03/07/2022'),
+					(RAND()*(90-65)+65) / 100
 					)
 			-- Insert random deliverable for current Action in current Politic Party
 			SELECT TOP 1 @kpiid = kpiid FROM KPIs ORDER BY NEWID()
@@ -446,34 +447,15 @@ WHERE (DATEDIFF(DAY, DATEADD(DAY, '03/07.2022', 700), D.date) <= 100) AND COUNT(
 ---- Endpoint 2
 DECLARE @pAccion INT;
 DECLARE @pPartido INT;
-
---SELECT PT.Partido, PT.ActionID, PT.PrimerTercio, PT.SegundoTercio, PT.TercerTercio FROM (
---	SELECT P.id,
---		   A.id as ActionID, 
---		   C.name,
---		   P.name as Partido
---	FROM Cantons C
---	INNER JOIN Actions A
---	ON A.id = @pAccion
---	INNER JOIN PoliticParties P
---	ON P.id = @pPartido
---) DensidadCanton
---PIVOT (
---	COUNT(ActionID)
---	FOR Cantons
---	IN (
---		[PrimerTercio],
---		[SegundoTercio],
---		[TercerTercio]
---	)
---) AS PT
+SET @pPartido = 1;
+SET @pAccion = 1;
 
 SELECT [name], [action], Tercio1, Tercio2, Tercio3 FROM 
 	(SELECT P.[name], A.[action], D.rate,
 		'Tercio' + CAST(DENSE_RANK() OVER(ORDER BY CASE
-											WHEN D.rate <= 33 THEN 1
-											WHEN D.rate <= 66 THEN 2
-											WHEN D.rate <= 100 THEN 3
+											WHEN D.rate <= 0.33 THEN 1
+											WHEN D.rate <= 0.66 THEN 2
+											WHEN D.rate <= 0.1 THEN 3
 											END ASC) AS VARCHAR(16)) AS RANGO
 	FROM PoliticParties P
 		INNER JOIN Actions A
@@ -484,14 +466,16 @@ SELECT [name], [action], Tercio1, Tercio2, Tercio3 FROM
 		ON CD.deliverableid = D.deliverableid
 		INNER JOIN Cantons C
 		ON C.cantonid = CD.cantonid
+	WHERE @pPartido = P.politicpartyid AND @pAccion = A.actionid
 	) AS RANGETABLE
 	PIVOT
 	(
-		COUNT(D.rate)
+		COUNT(rate)
 		FOR RANGO IN 
 		( [Tercio1], [Tercio2], [Tercio3]
 		)
 	) AS PIVOTABLE
+
 
 -- Endpoint 3
 
@@ -517,13 +501,180 @@ DECLARE @pEntrada VARCHAR(16);
 
 
 -- Endpoint 4
+/*
+Ranking por partido con mayores niveles de satisfacción en su plan en forma global pero cuya acción tenga el mismo comportamiento 
+para todos los cantones donde habrá un entregable. Se consideran aceptables al top 30% de las calificaciones de satisfacción.
 
+Rank, except, intersect, pivot tables, rank
 
+Partido, % aceptación, posición, nota máxima obtenida
+
+¡LEER ANTES DE SEGUIR!
+En este query, Los Partidos Politicos seran rankeados y compiten por la mayor satisfaccion
+recibida de los ciudadanos, de cada canton, a cada entregable contenido en las diferentes
+acciones que posee el plan de gobierno del Partido politico.
+
+Entonces, se busca la accion que mayor Satisfaccion logró, usando el promedio de las
+calificaciones de sus entregables. Estas calificaciones deben seguir un mismo comportamiento,
+es decir, su varianza respecto a la media debe ser como maximo de 30% para que sea valido,
+en caso contrario, esa accion no sera considerada como parte del plan de gobierno.
+*/
+GO
+
+CREATE FUNCTION [dbo].getUpperLimit (
+	@in_actionid INT
+	)
+	RETURNS FLOAT AS
+	BEGIN
+		DECLARE	@return_value FLOAT
+		DECLARE @variance FLOAT
+		DECLARE @average FLOAT
+		SELECT @variance = ((FLOOR(AVG(d.rate)*100)*0.30)/100)/2 FROM Actions AS a
+			INNER JOIN Deliverables AS d ON a.actionid = d.actionId
+		WHERE a.actionid = @in_actionid
+		SELECT @average = AVG(d.rate) FROM Actions AS a
+			INNER JOIN Deliverables AS d ON a.actionid = d.actionId
+		WHERE a.actionid = @in_actionid
+		SELECT @return_value = @average + @variance
+		RETURN @return_value
+	END
+GO
+
+CREATE FUNCTION [dbo].getLowerLimit (
+	@in_actionid INT
+	)
+	RETURNS FLOAT AS
+	BEGIN
+		DECLARE	@return_value FLOAT
+		DECLARE @variance FLOAT
+		DECLARE @average FLOAT
+		SELECT @variance = ((FLOOR(AVG(d.rate)*100)*0.30)/100)/2 FROM Actions AS a
+			INNER JOIN Deliverables AS d ON a.actionid = d.actionId
+		WHERE a.actionid = @in_actionid
+		SELECT @average = AVG(d.rate) FROM Actions AS a
+			INNER JOIN Deliverables AS d ON a.actionid = d.actionId
+		WHERE a.actionid = @in_actionid
+		SELECT @return_value = @average - @variance
+		RETURN @return_value
+	END
+GO
+
+GO
+
+CREATE FUNCTION [dbo].isValidAction (
+	@in_actionid INT
+	)
+	RETURNS BIT AS
+	BEGIN
+		DECLARE	@original_count INT
+		DECLARE	@filtered_count INT
+		
+		SELECT @original_count = COUNT(d.deliverableid) FROM Deliverables AS d
+									WHERE d.actionId = @in_actionid
+		SELECT @filtered_count = COUNT(d.deliverableid)
+								FROM Deliverables as d
+								WHERE [dbo].getLowerLimit(@in_actionid) <= d.rate
+									AND [dbo].getUpperLimit(@in_actionid) >= d.rate
+									AND d.actionId = @in_actionid
+		IF (@original_count = @filtered_count)
+		BEGIN
+			RETURN 1
+		END
+		RETURN 0
+	END
+GO
+
+SELECT  PoliticParty, 
+		MAX(avg_delivs) AS Porcentaje_aceptacion,
+		RANK() OVER (ORDER BY MAX(avg_delivs) DESC) AS Posicion,
+		(SELECT MAX(sub_d.rate) FROM Deliverables AS sub_d
+			WHERE sub_d.politicPartyId = GlobsMax.pId
+			
+			) AS Nota_maxima_obtenida
+		FROM (SELECT p.politicpartyid AS pId, p.name AS PoliticParty, a.action AS Action, AVG(d.rate) AS avg_delivs FROM PoliticParties AS p
+					INNER JOIN Actions AS a ON a.politicpartyid = p.politicpartyid
+					INNER JOIN Deliverables AS d ON d.actionId = a.actionid
+				WHERE dbo.isValidAction(a.actionid) = 1
+				GROUP BY p.name, p.politicpartyid, a.politicpartyid, a.action) AS GlobsMax
+GROUP BY pId, PoliticParty
 
 -- Endpoint 5
+/*
+Reporte de niveles de satisfacción por partido por cantón ordenados por mayor calificación a menor y por partido.
+Finalmente agregando un sumarizado por partido de los mismos porcentajes.
+pivot tab,,,,les, roll up
 
+Partido, cantón, % insatisfechos, % medianamente satisfechos, % de muy satisfechos, sumarizado
+*/
 
 
 -- Endpoint 6
+/*
+Dada un usuario ciudadano y un plan de un partido, recibir una lista de entregables para su cantón 
+y las respectivas calificaciones de satisfacción para ser guardadas en forma transaccional.
+
+Table value parameters, transactions, read committed, transaction error handling
+
+200 OK
+*/
 
 
+/*
+Referencia Checpoint en clase:
+
+-- Crea un User Defined Table Type
+CREATE TYPE EntregableTVP AS TABLE(id_entregable int, canton int, satisfaccion float)
+GO
+
+-- Procedimiento para guardar
+ALTER PROCEDURE SaveEntregable @ciudadano int , @accion int, @TVP EntregableTVP READONLY
+    AS
+    SET NOCOUNT ON SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+    -- investigar validación con merge.
+    BEGIN TRY
+
+        BEGIN TRANSACTION Guardar_Satisfaccion
+            INSERT INTO dbo.CiudadanoXEntregable(id_ciudadano, id_entregable, satisfaccion)
+            SELECT @ciudadano, T.id_entregable,T.satisfaccion
+            FROM @TVP AS T inner join dbo.Entregable AS E ON T.id_entregable = E.id and E.id_accion = @accion
+
+        COMMIT TRANSACTION Guardar_Satisfaccion
+        SELECT '200 OK';
+    END TRY
+
+
+    BEGIN CATCH
+        SELECT
+            ERROR_NUMBER()    AS  NumeroError,
+            ERROR_STATE()     AS  EstadoError,
+            ERROR_SEVERITY()  AS  SeveridadError,
+            ERROR_PROCEDURE() AS  ErrorDeProcedimiento,
+            ERROR_LINE()      AS  LineaError,
+            ERROR_MESSAGE()   AS  MensajeError
+
+        -- Non committable transaction.
+        IF (XACT_STATE()) = -1
+            ROLLBACK TRANSACTION Guardar_Satisfaccion
+
+        -- Committable transaction.
+        IF (XACT_STATE()) = 1
+            COMMIT TRANSACTION Guardar_Satisfaccion
+
+    END CATCH
+GO
+
+
+-- Declaro una variable que referencia al tipo tabla entregable
+DECLARE @EntregableTVP AS EntregableTVP;
+
+-- Inserto datos a la variable
+INSERT INTO @EntregableTVP (id_entregable,canton,satisfaccion)
+    SELECT id, id_canton, 0.25
+    FROM Entregable
+    WHERE id_canton = 15
+
+SELECT id_entregable, canton, satisfaccion FROM @EntregableTVP;
+
+EXEC SaveEntregable 55,11,@EntregableTVP;
+
+*/
