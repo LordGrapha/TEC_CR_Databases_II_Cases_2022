@@ -618,7 +618,7 @@ Partido, cantón, % insatisfechos, % medianamente satisfechos, % de muy satisfec
 */
 IF object_id('Endpoint_5') IS NULL
 BEGIN
-	EXEC('ALTER PROCEDURE [dbo].[Endpoint_5]
+	EXEC('CREATE PROCEDURE [dbo].[Endpoint_5]
 	AS
 	BEGIN
 		SELECT  p.name AS Partido, 
