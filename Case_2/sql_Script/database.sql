@@ -481,9 +481,9 @@ SELECT [name], [action], Tercio1, Tercio2, Tercio3 FROM
 
 DECLARE @pEntrada VARCHAR(16);
 
-SELECT [year], [name], counte, [rank]
+SELECT Año, [name], counte, [rank]
 FROM 
-  ( SELECT DATEPART(YEAR, D.[date]), PP.[name], COUNT(D.deliverableId) as counte,
+  ( SELECT DATEPART(YEAR, D.[date]) as Año, PP.[name], COUNT(D.deliverableId) as counte,
            RANK() OVER (PARTITION BY [name]
                               ORDER BY DATEPART(MONTH, D.[date]) DESC
                              )
