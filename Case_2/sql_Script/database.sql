@@ -521,92 +521,122 @@ en caso contrario, esa accion no sera considerada como parte del plan de gobiern
 */
 GO
 
-CREATE FUNCTION [dbo].getUpperLimit (
-	@in_actionid INT
-	)
-	RETURNS FLOAT AS
-	BEGIN
-		DECLARE	@return_value FLOAT
-		DECLARE @variance FLOAT
-		DECLARE @average FLOAT
-		SELECT @variance = ((FLOOR(AVG(d.rate)*100)*0.30)/100)/2 FROM Actions AS a
-			INNER JOIN Deliverables AS d ON a.actionid = d.actionId
-		WHERE a.actionid = @in_actionid
-		SELECT @average = AVG(d.rate) FROM Actions AS a
-			INNER JOIN Deliverables AS d ON a.actionid = d.actionId
-		WHERE a.actionid = @in_actionid
-		SELECT @return_value = @average + @variance
-		RETURN @return_value
-	END
-GO
+IF object_id('getUpperLimit', 'FN') IS NULL
+BEGIN
+    EXEC('CREATE FUNCTION [dbo].getUpperLimit (
+			@in_actionid INT
+			)
+			RETURNS FLOAT AS
+			BEGIN
+				DECLARE	@return_value FLOAT
+				DECLARE @variance FLOAT
+				DECLARE @average FLOAT
+				SELECT @variance = ((FLOOR(AVG(d.rate)*100)*0.30)/100)/2 FROM Actions AS a
+					INNER JOIN Deliverables AS d ON a.actionid = d.actionId
+				WHERE a.actionid = @in_actionid
+				SELECT @average = AVG(d.rate) FROM Actions AS a
+					INNER JOIN Deliverables AS d ON a.actionid = d.actionId
+				WHERE a.actionid = @in_actionid
+				SELECT @return_value = @average + @variance
+				RETURN @return_value
+			END')
+END
 
-CREATE FUNCTION [dbo].getLowerLimit (
-	@in_actionid INT
-	)
-	RETURNS FLOAT AS
-	BEGIN
-		DECLARE	@return_value FLOAT
-		DECLARE @variance FLOAT
-		DECLARE @average FLOAT
-		SELECT @variance = ((FLOOR(AVG(d.rate)*100)*0.30)/100)/2 FROM Actions AS a
-			INNER JOIN Deliverables AS d ON a.actionid = d.actionId
-		WHERE a.actionid = @in_actionid
-		SELECT @average = AVG(d.rate) FROM Actions AS a
-			INNER JOIN Deliverables AS d ON a.actionid = d.actionId
-		WHERE a.actionid = @in_actionid
-		SELECT @return_value = @average - @variance
-		RETURN @return_value
-	END
-GO
+IF object_id('getLowerLimit', 'FN') IS NULL
+BEGIN
+    EXEC('CREATE FUNCTION [dbo].getLowerLimit (
+			@in_actionid INT
+			)
+			RETURNS FLOAT AS
+			BEGIN
+				DECLARE	@return_value FLOAT
+				DECLARE @variance FLOAT
+				DECLARE @average FLOAT
+				SELECT @variance = ((FLOOR(AVG(d.rate)*100)*0.30)/100)/2 FROM Actions AS a
+					INNER JOIN Deliverables AS d ON a.actionid = d.actionId
+				WHERE a.actionid = @in_actionid
+				SELECT @average = AVG(d.rate) FROM Actions AS a
+					INNER JOIN Deliverables AS d ON a.actionid = d.actionId
+				WHERE a.actionid = @in_actionid
+				SELECT @return_value = @average - @variance
+				RETURN @return_value
+			END')
+END
 
-GO
-
-CREATE FUNCTION [dbo].isValidAction (
-	@in_actionid INT
-	)
-	RETURNS BIT AS
-	BEGIN
-		DECLARE	@original_count INT
-		DECLARE	@filtered_count INT
+IF object_id('isValidAction', 'FN') IS NULL
+BEGIN
+    EXEC('CREATE FUNCTION [dbo].isValidAction (
+			@in_actionid INT
+			)
+			RETURNS BIT AS
+			BEGIN
+				DECLARE	@original_count INT
+				DECLARE	@filtered_count INT
 		
-		SELECT @original_count = COUNT(d.deliverableid) FROM Deliverables AS d
-									WHERE d.actionId = @in_actionid
-		SELECT @filtered_count = COUNT(d.deliverableid)
-								FROM Deliverables as d
-								WHERE [dbo].getLowerLimit(@in_actionid) <= d.rate
-									AND [dbo].getUpperLimit(@in_actionid) >= d.rate
-									AND d.actionId = @in_actionid
-		IF (@original_count = @filtered_count)
-		BEGIN
-			RETURN 1
-		END
-		RETURN 0
-	END
-GO
+				SELECT @original_count = COUNT(d.deliverableid) FROM Deliverables AS d
+											WHERE d.actionId = @in_actionid
+				SELECT @filtered_count = COUNT(d.deliverableid)
+										FROM Deliverables as d
+										WHERE [dbo].getLowerLimit(@in_actionid) <= d.rate
+											AND [dbo].getUpperLimit(@in_actionid) >= d.rate
+											AND d.actionId = @in_actionid
+				IF (@original_count = @filtered_count)
+				BEGIN
+					RETURN 1
+				END
+				RETURN 0
+			END')
+END
 
-SELECT  PoliticParty, 
-		MAX(avg_delivs) AS Porcentaje_aceptacion,
-		RANK() OVER (ORDER BY MAX(avg_delivs) DESC) AS Posicion,
-		(SELECT MAX(sub_d.rate) FROM Deliverables AS sub_d
-			WHERE sub_d.politicPartyId = GlobsMax.pId
-			
-			) AS Nota_maxima_obtenida
+IF object_id('Endpoint_4') IS NULL
+BEGIN
+	EXEC('CREATE PROCEDURE [dbo].[Endpoint_4]
+	AS
+	BEGIN
+		SELECT  PoliticParty, 
+				MAX(avg_delivs) AS Porcentaje_aceptacion,
+				RANK() OVER (ORDER BY MAX(avg_delivs) DESC) AS Posicion,
+				(SELECT MAX(sub_d.rate) FROM Deliverables AS sub_d
+					WHERE sub_d.politicPartyId = GlobsMax.pId
+					) AS Nota_maxima_obtenida
 		FROM (SELECT p.politicpartyid AS pId, p.name AS PoliticParty, a.action AS Action, AVG(d.rate) AS avg_delivs FROM PoliticParties AS p
 					INNER JOIN Actions AS a ON a.politicpartyid = p.politicpartyid
 					INNER JOIN Deliverables AS d ON d.actionId = a.actionid
 				WHERE dbo.isValidAction(a.actionid) = 1
 				GROUP BY p.name, p.politicpartyid, a.politicpartyid, a.action) AS GlobsMax
-GROUP BY pId, PoliticParty
+		GROUP BY pId, PoliticParty
+	END')
+END
 
 -- Endpoint 5
 /*
 Reporte de niveles de satisfacción por partido por cantón ordenados por mayor calificación a menor y por partido.
 Finalmente agregando un sumarizado por partido de los mismos porcentajes.
-pivot tab,,,,les, roll up
+pivot tables, roll up
 
 Partido, cantón, % insatisfechos, % medianamente satisfechos, % de muy satisfechos, sumarizado
 */
-
+IF object_id('Endpoint_5') IS NULL
+BEGIN
+	EXEC('ALTER PROCEDURE [dbo].[Endpoint_5]
+	AS
+	BEGIN
+		SELECT  p.name AS Partido, 
+				c.name AS Canton,
+				CAST(SUM(CASE WHEN d.rate < 0.74 
+							THEN 1 ELSE 0 END) AS decimal(3))/CAST(COUNT(1) AS decimal(3)) AS Porcentaje_insatisfechos,
+				CAST(SUM(CASE WHEN d.rate >= 0.74 AND d.rate <= 0.82 
+							THEN 1 ELSE 0 END) AS decimal(3))/CAST(COUNT(1) AS decimal(3)) AS Porcentaje_medio_satisfechos,
+				CAST(SUM(CASE WHEN d.rate >= 0.83 AND d.rate <= 0.90 
+							THEN 1 ELSE 0 END) AS decimal(3))/CAST(COUNT(1) AS decimal(3)) AS Porcentaje_altamente_satisfechos
+		FROM Deliverables AS d
+			INNER JOIN CantonsXDeliverables AS cxd ON d.deliverableid = cxd.deliverableid
+			INNER JOIN Cantons AS c ON c.cantonid = cxd.cantonid
+			INNER JOIN PoliticParties AS p ON d.politicPartyId = p.politicpartyid
+		GROUP BY ROLLUP(c.name, p.name)
+		ORDER BY Porcentaje_altamente_satisfechos DESC
+	END')
+END
 
 -- Endpoint 6
 /*
