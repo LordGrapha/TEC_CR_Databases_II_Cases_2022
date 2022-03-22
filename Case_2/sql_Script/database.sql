@@ -481,7 +481,7 @@ SELECT [name], [action], Tercio1, Tercio2, Tercio3 FROM
 
 DECLARE @pEntrada VARCHAR(16);
 
-SELECT Año, [name], counte, [rank]
+SELECT TOP 3 Año, [name], counte, [rank]
 FROM 
   ( SELECT DATEPART(YEAR, D.[date]) as Año, PP.[name], COUNT(D.deliverableId) as counte,
            RANK() OVER (PARTITION BY [name]
@@ -492,8 +492,8 @@ FROM
 	INNER JOIN Deliverables D
 	ON D.politicPartyId = PP.politicPartyId
   ) tmp 
-WHERE [rank] <= 3 AND CONTAINS([name], @pEntrada)
-ORDER BY [name], [rank] ; 
+WHERE CONTAINS([name], @pEntrada)
+ORDER BY Año; 
 
 --SELECT * 
 --	FROM
