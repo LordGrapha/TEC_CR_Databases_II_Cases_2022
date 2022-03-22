@@ -496,10 +496,6 @@ FROM
 --WHERE CONTAINS(Entregable, @pEntrada)
 ORDER BY Año; 
 
---SELECT * 
---	FROM
---	(SELECT	P.[name], [year], [month], percent)
-
 
 -- Endpoint 4
 /*
