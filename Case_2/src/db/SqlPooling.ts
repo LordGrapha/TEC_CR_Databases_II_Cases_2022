@@ -10,7 +10,7 @@ export class SqlProvider{
         this.config = {
             server: "localhost", // or "localhost" or "25.8.65.60"
             options: {
-                database : "Case_1",
+                database : "Case_2",
                 trustServerCertificate : true,
                 rowCollectionOnDone : true
             },

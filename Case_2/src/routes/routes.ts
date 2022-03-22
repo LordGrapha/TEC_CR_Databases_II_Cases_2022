@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { Logger } from '../common';
-import {cantonsrouter} from './cantonsrouter';
+import { endpointsrouter } from './endpointsrouter';
 
 class Routes {
 
@@ -22,7 +22,7 @@ class Routes {
     }
 
     private routes(): void {
-        this.express.use("/cantons", cantonsrouter);
+        this.express.use("/case_2", endpointsrouter);
     }
 }
 

@@ -1,1 +1,1 @@
-export { CantonController } from './cantonscontroller'
+export { EndpointController } from './endpointscontroller'

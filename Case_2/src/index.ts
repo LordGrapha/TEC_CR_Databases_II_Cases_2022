@@ -18,5 +18,3 @@ server.on('listening', () => {
  });
 
 module.exports = App;
-
-// docker run -it --name nodeserver -v C:\dev\cursostec:/home node /bin/bash
