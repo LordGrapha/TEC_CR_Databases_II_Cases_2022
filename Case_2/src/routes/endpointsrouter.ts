@@ -8,7 +8,7 @@ const log = new Logger();
 app.get("/endpoint_1", (req, res) => {
     EndpointController.getInstance().getEndpoint_1()
     .then((data)=>{
-        res.json(data);
+        res.json(data.recordsets);
     })
     .catch((err)=>{
         log.error(err);
@@ -20,7 +20,7 @@ app.get("/endpoint_1", (req, res) => {
 app.get("/endpoint_2", (req, res) => {
     EndpointController.getInstance().getEndpoint_2()
     .then((data)=>{
-        res.json(data);
+        res.json(data.recordsets);
     })
     .catch((err)=>{
         log.error(err);
@@ -29,8 +29,8 @@ app.get("/endpoint_2", (req, res) => {
 
 });
 
-app.get("/endpoint_3", (req, res) => {
-    EndpointController.getInstance().getEndpoint_3()
+app.post("/endpoint_3", (req, res) => {
+    EndpointController.getInstance().getEndpoint_3(req.body.word)
     .then((data)=>{
         res.json(data);
     })
@@ -56,7 +56,7 @@ app.get("/endpoint_4", (req, res) => {
 app.get("/endpoint_5", (req, res) => {
     EndpointController.getInstance().getEndpoint_5()
     .then((data)=>{
-        res.json(data);
+        res.json(data.recordsets);
     })
     .catch((err)=>{
         log.error(err);
@@ -65,10 +65,11 @@ app.get("/endpoint_5", (req, res) => {
 
 });
 
-app.get("/endpoint_6", (req, res) => {
-    EndpointController.getInstance().getEndpoint_6()
+app.post("/endpoint_6", (req, res) => { 
+    EndpointController.getInstance().getEndpoint_6(req.body.citizenid, req.body.actionid)
     .then((data)=>{
-        res.json(data);
+        if(data.recordset)
+        res.json(data.recordsets);
     })
     .catch((err)=>{
         log.error(err);

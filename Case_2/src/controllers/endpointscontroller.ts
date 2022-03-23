@@ -33,10 +33,10 @@ export class EndpointController {
         return sqlServerData.getEndpoint_2();
     }
 
-    public getEndpoint_3()
+    public getEndpoint_3(pWord : any)
     {
         const sqlServerData = new endpoints_data();
-        return sqlServerData.getEndpoint_3();
+        return sqlServerData.getEndpoint_3(pWord);
     }
 
     public getEndpoint_4()
@@ -51,9 +51,9 @@ export class EndpointController {
         return sqlServerData.getEndpoint_5();
     }
 
-    public getEndpoint_6()
+    public getEndpoint_6(pCitizen : any, pAction : any)
     {
         const sqlServerData = new endpoints_data();
-        return sqlServerData.getEndpoint_6();
+        return sqlServerData.getEndpoint_6(pCitizen, pAction);
     }
 }

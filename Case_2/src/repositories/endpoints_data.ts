@@ -17,29 +17,22 @@ export class endpoints_data {
 
     public async getEndpoint_1()
     {
-        this.sqlConnection.request()
+        return this.sqlConnection.request()
             .execute('[dbo].[Endpoint_1]')
-            .then(result => {
-                return result.recordsets;
-            }).catch(err => {
-                console.log(err)
-            })
+
     }
 
     public async getEndpoint_2()
     {
-        this.sqlConnection.request()
+        return this.sqlConnection.request()
             .execute('[dbo].[Endpoint_2]')
-            .then(result => {
-                return result.recordsets;
-            }).catch(err => {
-                console.log(err)
-            })
+
     }
 
-    public async getEndpoint_3()
+    public async getEndpoint_3(pWord : any)
     {
-        this.sqlConnection.request()
+        return this.sqlConnection.request()
+            .input("pEntrada", mssql.VarChar, pWord)
             .execute('[dbo].[Endpoint_3]')
             .then(result => {
                 return result.recordsets;
@@ -56,24 +49,20 @@ export class endpoints_data {
 
     public async getEndpoint_5()
     {
-        this.sqlConnection.request()
+        return this.sqlConnection.request()
             .execute('[dbo].[Endpoint_5]')
-            .then(result => {
-                return result.recordsets;
-            }).catch(err => {
-                console.log(err)
-            })
     }
 
-    public async getEndpoint_6()
+    public async getEndpoint_6(pCitizen : any, pAction : any)
     {
-        this.sqlConnection.request()
-            .execute('[dbo].[Endpoint_6]')
-            .then(result => {
-                return result.recordsets;
-            }).catch(err => {
-                console.log(err)
-            })
+        console.log("Citizenid: " + pCitizen);
+        
+        console.log("Actionid: " + pAction);
+        
+        return this.sqlConnection.request()
+            .input("citizenid", mssql.Int, pCitizen)
+            .input("actionid", mssql.Int, pAction)
+            .execute('[dbo].[Endpoint_6_entry]')
     }
 
 }
