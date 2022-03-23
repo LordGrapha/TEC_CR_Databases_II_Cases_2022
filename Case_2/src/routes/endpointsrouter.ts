@@ -68,7 +68,6 @@ app.get("/endpoint_5", (req, res) => {
 app.post("/endpoint_6", (req, res) => { 
     EndpointController.getInstance().getEndpoint_6(req.body.citizenid, req.body.actionid)
     .then((data)=>{
-        if(data.recordset)
         res.json(data.recordsets);
     })
     .catch((err)=>{

@@ -440,22 +440,23 @@ BEGIN
     AS
         BEGIN
             SELECT C.name, COUNT(D.deliverableid) FROM Cantons C
-            INNER JOIN CantonsXDeliverables CD
-            ON CD.cantonId = C.cantonid
-            INNER JOIN Deliverables D
-            ON D.deliverableid = CD.deliverableid
-            WHERE (DATEDIFF(DAY, ''03/07.2022'', D.date) <= 100)
-            EXCEPT
-            SELECT C.name, COUNT(D.deliverableid) FROM Cantons C
-            INNER JOIN CantonsXDeliverables CD
-            ON CD.cantonId = C.cantonid
-            INNER JOIN Deliverables D    
-            ON D.deliverableid = CD.deliverableid
-            WHERE (DATEDIFF(DAY, DATEADD(DAY, ''03/07.2022'', 700), D.date) <= 100) AND COUNT(D.deliverableid) != 0 
+			INNER JOIN CantonsXDeliverables CD
+			ON CD.cantonId = C.cantonid
+			INNER JOIN Deliverables D
+			ON D.deliverableid = CD.deliverableid
+			WHERE (DATEDIFF(DAY, ''2022/07/03'', D.date) <= 100)
+			GROUP BY C.name
+			EXCEPT
+			SELECT C.name, COUNT(D.deliverableid) FROM Cantons C
+			INNER JOIN CantonsXDeliverables CD
+			ON CD.cantonId = C.cantonid
+			INNER JOIN Deliverables D    
+			ON D.deliverableid = CD.deliverableid
+			WHERE (DATEDIFF(DAY, DATEADD(DAY, 700, ''2022/07/03''), D.date) <= 100) AND (SELECT COUNT(deliverableid) FROM Deliverables) != 0 
+			GROUP BY C.name
         END')
 END
 
-EXEC [dbo].[Endpoint_2]
 ---- Endpoint 2
 IF object_id('Endpoint_2') IS NULL
 BEGIN
@@ -495,17 +496,18 @@ BEGIN
         END')
 END
 
-GO
-
 -- Endpoint 3
-CREATE PROCEDURE [dbo].[Endpoint_3] 
+
+IF object_id('Endpoint_2') IS NULL
+BEGIN
+    EXEC('CREATE PROCEDURE [dbo].[Endpoint_3] 
     (
         @pEntrada VARCHAR(16)
     )
     AS
         BEGIN
-            DECLARE @pYear int = (SELECT YEAR (DATEADD(DAY, 700,'03/07/2022')))
-            DECLARE @pActualYear int = (SELECT YEAR ('03/07/2022'))
+            DECLARE @pYear int = (SELECT YEAR (DATEADD(DAY, 700,''03/07/2022'')))
+            DECLARE @pActualYear int = (SELECT YEAR (''03/07/2022''))
 
             WHILE @pYear > @pActualYear
             BEGIN
@@ -526,7 +528,10 @@ CREATE PROCEDURE [dbo].[Endpoint_3]
 
                 SET @pActualYear = @pActualYear + 1
         END
-	END
+	END')
+END
+
+
 
 
 -- Endpoint 4

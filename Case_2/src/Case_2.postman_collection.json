@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "e5a7cdb1-cf83-4165-837d-06dcb1421328",
+		"_postman_id": "b9e2f3c4-197a-47f4-a285-34408c117354",
 		"name": "Case_2",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -11,7 +11,17 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": ""
+					"raw": "http://localhost:5000/api/case_2/endpoint_1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"case_2",
+						"endpoint_1"
+					]
 				}
 			},
 			"response": []
@@ -22,7 +32,17 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": ""
+					"raw": "http://localhost:5000/api/case_2/endpoint_2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"case_2",
+						"endpoint_2"
+					]
 				}
 			},
 			"response": []
@@ -30,10 +50,24 @@
 		{
 			"name": "Endpoint_3",
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"word\": \"Entregable\"\r\n}"
+				},
 				"url": {
-					"raw": ""
+					"raw": "http://localhost:5000/api/case_2/endpoint_3",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"case_2",
+						"endpoint_3"
+					]
 				}
 			},
 			"response": []
@@ -44,7 +78,17 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": ""
+					"raw": "http://localhost:5000/api/case_2/endpoint_4",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"case_2",
+						"endpoint_4"
+					]
 				}
 			},
 			"response": []
@@ -55,18 +99,50 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": ""
+					"raw": "http://localhost:5000/api/case_2/endpoint_5",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"case_2",
+						"endpoint_5"
+					]
 				}
 			},
 			"response": []
 		},
 		{
 			"name": "Endpoint_6",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"citizenid\": 1,\r\n    \"actionid\": 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
 				"url": {
-					"raw": ""
+					"raw": "http://localhost:5000/api/case_2/endpoint_6",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"case_2",
+						"endpoint_6"
+					]
 				}
 			},
 			"response": []

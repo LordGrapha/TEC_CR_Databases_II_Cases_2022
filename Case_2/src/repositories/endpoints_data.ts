@@ -55,10 +55,6 @@ export class endpoints_data {
 
     public async getEndpoint_6(pCitizen : any, pAction : any)
     {
-        console.log("Citizenid: " + pCitizen);
-        
-        console.log("Actionid: " + pAction);
-        
         return this.sqlConnection.request()
             .input("citizenid", mssql.Int, pCitizen)
             .input("actionid", mssql.Int, pAction)
