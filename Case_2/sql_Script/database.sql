@@ -414,6 +414,10 @@ BEGIN
 	DELETE @LOCAL_CantonsSupported
 END
 
+--For endpoint 6
+CREATE TYPE Deliv_list AS TABLE(name VARCHAR(63), date DATE, rate FLOAT)
+GO
+
 SELECT * FROM PoliticParties
 SELECT * FROM Users
 SELECT * FROM UsersXRoles
@@ -432,98 +436,97 @@ SELECT * FROM KPIs
 ---- Endpoint 1
 IF object_id('Endpoint_1') IS NULL
 BEGIN
-	EXEC('CREATE PROCEDURE [dbo].[Endpoint_1]
-	AS
-		BEGIN
-			SELECT C.name, COUNT(D.deliverableid) FROM Cantons C
-			INNER JOIN CantonsXDeliverables CD
-			ON CD.cantonId = C.cantonid
-			INNER JOIN Deliverables D
-			ON D.deliverableid = CD.deliverableid
-			WHERE (DATEDIFF(DAY, ''03/07.2022'', D.date) <= 100)
-			EXCEPT
-			SELECT C.name, COUNT(D.deliverableid) FROM Cantons C
-			INNER JOIN CantonsXDeliverables CD
-			ON CD.cantonId = C.cantonid
-			INNER JOIN Deliverables D	
-			ON D.deliverableid = CD.deliverableid
-			WHERE (DATEDIFF(DAY, DATEADD(DAY, ''03/07.2022'', 700), D.date) <= 100) AND COUNT(D.deliverableid) != 0 
-		END')
+    EXEC('CREATE PROCEDURE [dbo].[Endpoint_1]
+    AS
+        BEGIN
+            SELECT C.name, COUNT(D.deliverableid) FROM Cantons C
+            INNER JOIN CantonsXDeliverables CD
+            ON CD.cantonId = C.cantonid
+            INNER JOIN Deliverables D
+            ON D.deliverableid = CD.deliverableid
+            WHERE (DATEDIFF(DAY, ''03/07.2022'', D.date) <= 100)
+            EXCEPT
+            SELECT C.name, COUNT(D.deliverableid) FROM Cantons C
+            INNER JOIN CantonsXDeliverables CD
+            ON CD.cantonId = C.cantonid
+            INNER JOIN Deliverables D    
+            ON D.deliverableid = CD.deliverableid
+            WHERE (DATEDIFF(DAY, DATEADD(DAY, ''03/07.2022'', 700), D.date) <= 100) AND COUNT(D.deliverableid) != 0 
+        END')
 END
 
+EXEC [dbo].[Endpoint_2]
 ---- Endpoint 2
 IF object_id('Endpoint_2') IS NULL
 BEGIN
-	EXEC('CREATE PROCEDURE [dbo].[Endpoint_2]
-	AS
-		BEGIN
-			DECLARE @pAccion INT;
-			DECLARE @pPartido INT;
-			SET @pPartido = 1;
-			SET @pAccion = 1;
+    EXEC('CREATE PROCEDURE [dbo].[Endpoint_2]
+    AS
+        BEGIN
+            DECLARE @pAccion INT;
+            DECLARE @pPartido INT;
+            SET @pPartido = 1;
+            SET @pAccion = 1;
 
-			SELECT [name], [action], Tercio1, Tercio2, Tercio3 FROM 
-				(SELECT P.[name], A.[action], D.rate,
-					''Tercio'' + CAST(DENSE_RANK() OVER(ORDER BY CASE
-														WHEN D.rate <= 0.33 THEN 1
-														WHEN D.rate <= 0.66 THEN 2
-														WHEN D.rate <= 0.1 THEN 3
-														END ASC) AS VARCHAR(16)) AS RANGO
-				FROM PoliticParties P
-					INNER JOIN Actions A
-					ON A.politicpartyid = P.politicpartyid
-					INNER JOIN Deliverables D
-					ON D.politicPartyId = P.politicpartyid
-					INNER JOIN CantonsXDeliverables CD
-					ON CD.deliverableid = D.deliverableid
-					INNER JOIN Cantons C
-					ON C.cantonid = CD.cantonid
-				WHERE @pPartido = P.politicpartyid AND @pAccion = A.actionid
-				) AS RANGETABLE
-				PIVOT
-				(
-					COUNT(rate)
-					FOR RANGO IN 
-					( [Tercio1], [Tercio2], [Tercio3]
-					)
-				) AS PIVOTABLE
-		END')
+            SELECT [name], [action], Tercio1, Tercio2, Tercio3 FROM 
+                (SELECT P.[name], A.[action], D.rate,
+                    ''Tercio'' + CAST(DENSE_RANK() OVER(ORDER BY CASE
+                                                        WHEN D.rate <= 0.33 THEN 1
+                                                        WHEN D.rate <= 0.66 THEN 2
+                                                        WHEN D.rate <= 0.1 THEN 3
+                                                        END ASC) AS VARCHAR(16)) AS RANGO
+                FROM PoliticParties P
+                    INNER JOIN Actions A
+                    ON A.politicpartyid = P.politicpartyid
+                    INNER JOIN Deliverables D
+                    ON D.politicPartyId = P.politicpartyid
+                    INNER JOIN CantonsXDeliverables CD
+                    ON CD.deliverableid = D.deliverableid
+                    INNER JOIN Cantons C
+                    ON C.cantonid = CD.cantonid
+                WHERE @pPartido = P.politicpartyid AND @pAccion = A.actionid
+                ) AS RANGETABLE
+                PIVOT
+                (
+                    COUNT(rate)
+                    FOR RANGO IN 
+                    ( [Tercio1], [Tercio2], [Tercio3]
+                    )
+                ) AS PIVOTABLE
+        END')
 END
 
+GO
 
 -- Endpoint 3
-IF object_id('Endpoint_3') IS NULL
-BEGIN
-	EXEC('CREATE PROCEDURE [dbo].[Endpoint_3] 
-	(
-		@pEntrada VARCHAR(16);
-	)
-	AS
-		BEGIN
-			DECLARE @pYear int = (SELECT YEAR (DATEADD(DAY, 700,''03/07/2022'')))
-			DECLARE @pActualYear int = (SELECT YEAR (''03/07/2022''))
+CREATE PROCEDURE [dbo].[Endpoint_3] 
+    (
+        @pEntrada VARCHAR(16)
+    )
+    AS
+        BEGIN
+            DECLARE @pYear int = (SELECT YEAR (DATEADD(DAY, 700,'03/07/2022')))
+            DECLARE @pActualYear int = (SELECT YEAR ('03/07/2022'))
 
-			WHILE @pYear > @pActualYear
-			BEGIN
-				SELECT TOP 3 Año, Partido, Entregable, Counte, Mes, [rank]
-				FROM 
-				  ( SELECT DATEPART(YEAR, D.[date]) as Año, PP.[name] As Partido, D.[name] As Entregable, COUNT(D.deliverableId) as counte, DATENAME(MONTH, D.[date]) as Mes,
-						   RANK() OVER (PARTITION BY PP.[name]
-											  ORDER BY DATEPART(MONTH, D.[date]) DESC
-											 )
-							 AS [rank]
-					FROM PoliticParties PP
-					INNER JOIN Deliverables D
-					ON D.politicPartyId = PP.politicPartyId
-					GROUP BY D.date, PP.name, D.name
-				  ) tmp 
-				WHERE CONTAINS(Entregable, @pEntrada) AND Año = @pActualYear
-				ORDER BY Año; 
+            WHILE @pYear > @pActualYear
+            BEGIN
+                SELECT TOP 3 Año, Partido, Entregable, Counte, Mes, [rank]
+                FROM 
+                  ( SELECT DATEPART(YEAR, D.[date]) as Año, PP.[name] As Partido, D.[name] As Entregable, COUNT(D.deliverableId) as counte, DATENAME(MONTH, D.[date]) as Mes,
+                           RANK() OVER (PARTITION BY PP.[name]
+                                              ORDER BY DATEPART(MONTH, D.[date]) DESC
+                                             )
+                             AS [rank]
+                    FROM PoliticParties PP
+                    INNER JOIN Deliverables D
+                    ON D.politicPartyId = PP.politicPartyId
+                    GROUP BY D.date, PP.name, D.name
+                  ) tmp 
+                WHERE Año = @pActualYear
+                ORDER BY Año; 
 
-				SET @pActualYear = @pActualYear + 1
-		END')
-
-END
+                SET @pActualYear = @pActualYear + 1
+        END
+	END
 
 
 -- Endpoint 4
@@ -545,7 +548,7 @@ calificaciones de sus entregables. Estas calificaciones deben seguir un mismo co
 es decir, su varianza respecto a la media debe ser como maximo de 30% para que sea valido,
 en caso contrario, esa accion no sera considerada como parte del plan de gobierno.
 */
-GO
+
 
 IF object_id('getUpperLimit', 'FN') IS NULL
 BEGIN
@@ -673,76 +676,95 @@ Table value parameters, transactions, read committed, transaction error handling
 
 200 OK
 */
-
-
-
--- Referencia Checpoint en clase:
-
--- Crea un User Defined Table Type
-CREATE TYPE EntregableTVP AS TABLE(id_entregable INT, canton INT, satisfaccion FLOAT, pName VARCHAR(64), pDate DATE)
 GO
 
--- Procedimiento para guardar
-ALTER PROCEDURE SaveEntregable @ciudadano INT , @accion INT, @TVP EntregableTVP READONLY
+
+IF object_id('Endpoint_6_entry') IS NULL
+BEGIN
+	EXEC('CREATE PROCEDURE Endpoint_6 (
+			@citizenid int , @actionid int, @list Deliv_list READONLY)
+			AS
+			SET NOCOUNT ON SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+
+			BEGIN TRY
+				DECLARE @cantonid INT
+				SELECT @cantonid = cxc.cantonid FROM CitizensXCantons AS cxc 
+					WHERE cxc.citizenid = @citizenid
+
+				DECLARE @politicpartyid INT
+				SELECT @politicpartyid = 1 FROM Actions AS a
+					WHERE a.actionid = @actionid
+
+				BEGIN TRANSACTION save_rate
+					INSERT INTO dbo.Deliverables(actionId, politicPartyId, name, date, rate) 
+						SELECT  @actionid, 
+								@politicpartyid, 
+								l.name, 
+								l.date, 
+								l.rate
+						FROM @list AS l
+
+				COMMIT TRANSACTION save_rate
+			END TRY
+
+			BEGIN CATCH
+				SELECT
+					ERROR_NUMBER()    AS  ErrorNumber,
+					ERROR_STATE()     AS  ErrorState,
+					ERROR_SEVERITY()  AS  ErrorSeverity,
+					ERROR_PROCEDURE() AS  ErrorProcedure,
+					ERROR_LINE()      AS  ErrorLine,
+					ERROR_MESSAGE()   AS  ErrorMessage
+
+				-- Non committable transaction.
+				IF (XACT_STATE()) = -1
+					ROLLBACK TRANSACTION save_rate
+
+				-- Committable transaction.
+				IF (XACT_STATE()) = 1
+					COMMIT TRANSACTION save_rate
+			END CATCH
+		GO')
+END
+
+
+
+IF object_id('Endpoint_6_entry') IS NULL
+BEGIN
+	EXEC('CREATE PROCEDURE Endpoint_6_entry (
+	@citizenid int , @actionid int)
     AS
-    SET NOCOUNT ON SET TRANSACTION ISOLATION LEVEL READ COMMITTED
-    -- investigar validación con merge.
-    BEGIN TRY
+		DECLARE @list Deliv_list;
+			--Virtual Table to add a bit of reality to random values
+		DECLARE @LOCAL_DeliverableNames TABLE (name VARCHAR(63))
+		DECLARE @deliv_name VARCHAR(63)
+		INSERT INTO @LOCAL_DeliverableNames VALUES
+			(''Entregable de planeacion''),
+			(''Entregable de progreso''),
+			(''Entregable de Permisos publicos''),
+			(''Entregable de firmas''),
+			(''Entregable de evidencias fotos''),
+			(''Entregable de evidencias videos''),
+			(''Entregable de evidencias audios''),
+			(''Entregable de conclusion de la accion propuesta'')
 
-        BEGIN TRANSACTION Guardar_Satisfaccion
-            INSERT INTO Deliverables
-						(actionId, 
-						 politicPartyId, 
-						 name,
-						 rate,
-						 date,
-						 posttime,
-						 deleted,
-						 enabled)
-            SELECT @accion, A.politicpartyid, T.pName, T.satisfaccion, T.pDate
-            FROM @TVP AS T 
-			INNER JOIN Deliverables AS D 
-			ON T.id_entregable = D.deliverableid
-			INNER JOIN Actions A
-			ON A.actionid = @accion
-			
+		DECLARE @delivs_quantity INT
+		SET @delivs_quantity = 5
 
-        COMMIT TRANSACTION Guardar_Satisfaccion
-        SELECT '200 OK';
-    END TRY
+		WHILE @delivs_quantity > 0
+		BEGIN
+			SELECT TOP 1 @deliv_name = name FROM @LOCAL_DeliverableNames ORDER BY NEWID()
 
+			INSERT INTO @list (name, date, rate)
+				VALUES(
+						@deliv_name, 
+						DATEADD(dd, 700*RAND(), ''03/07/2022''),
+						(RAND()*(90-65)+65)/100
+						)
+			SET @delivs_quantity = @delivs_quantity - 1
+		END
+		EXEC Endpoint_6 @citizenid, @actionid, @list;
+	GO')
+END
 
-    BEGIN CATCH
-        SELECT
-            ERROR_NUMBER()    AS  NumeroError,
-            ERROR_STATE()     AS  EstadoError,
-            ERROR_SEVERITY()  AS  SeveridadError,
-            ERROR_PROCEDURE() AS  ErrorDeProcedimiento,
-            ERROR_LINE()      AS  LineaError,
-            ERROR_MESSAGE()   AS  MensajeError
-
-        -- Non committable transaction.
-        IF (XACT_STATE()) = -1
-            ROLLBACK TRANSACTION Guardar_Satisfaccion
-
-        -- Committable transaction.
-        IF (XACT_STATE()) = 1
-            COMMIT TRANSACTION Guardar_Satisfaccion
-
-    END CATCH
 GO
-
-
--- Declaro una variable que referencia al tipo tabla entregable
-DECLARE @EntregableTVP AS EntregableTVP;
-
--- Inserto datos a la variable
-INSERT INTO @EntregableTVP (id_entregable, canton, satisfaccion, pName, pDate)
-    SELECT id, id_canton, 0.25
-    FROM Entregable
-    WHERE id_canton = 15
-
-SELECT id_entregable, canton, satisfaccion FROM @EntregableTVP;
-
-EXEC SaveEntregable 55,11,@EntregableTVP;
-
