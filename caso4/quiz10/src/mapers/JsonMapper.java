@@ -15,25 +15,31 @@ import org.apache.hadoop.io.Text;
 public class JsonMapper extends MapReduceBase implements Mapper<LongWritable,Text,Text,Text> { 
 
     public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter reporter) throws  JSONException, IOException {    
-    	try {    		
+    	try {    
+    		
+
     		String line = value.toString();// Pasear a Json
 			JSONObject currentJson = (JSONObject) new JSONParser().parse(line);
 			
-			// Agarrar los datos
-			String metaverse = currentJson.get("metaverso").toString();
+			String age = currentJson.get("age").toString();
+			String gender = currentJson.get("gender").toString();
 			String posttime = currentJson.get("posttime").toString();
+			String tag1 = currentJson.get("tag1").toString();
+			String action = currentJson.get("actiontype").toString();
 			String[] parts = posttime.split("-");
 			String year = parts[0];
-			String time = currentJson.get("timespent").toString();
-			String coins = currentJson.get("coinsspent").toString();	
-			Text Key = new Text(metaverse + "," + year);
-			Text data = new Text (time + "," + coins);
-			
+			String month = parts[1];
+
+			Text Key = new Text(year+"-"+month +"-"+tag1 +"-" + action);
+			String js = "{\"age\":\""+ age + "\",	\"gender\":\""+ gender +"\", \"year\":\""+ year +"\",\"month\":\""+ month+ "\"}";
+			Text data = new Text (js);
+
 			// Salida
 			output.collect(Key, data);
 			
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
+    	
     }
 }

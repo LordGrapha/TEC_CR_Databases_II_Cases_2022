@@ -15,6 +15,7 @@ import reducers.JsonReducer;
 
 public class maprunner {
 	public static void main(String[] args) throws IOException{    
+
 	    JobConf conf = new JobConf(mapr.maprunner.class);    
 	    conf.setJobName("Quiz 9 y 10");    
 	    conf.setOutputKeyClass(Text.class); // Key Metaverso y anio
@@ -29,3 +30,4 @@ public class maprunner {
 	    JobClient.runJob(conf);
 	}    
 }
+
