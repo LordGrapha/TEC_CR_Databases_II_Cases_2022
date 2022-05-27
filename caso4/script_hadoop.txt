@@ -1,0 +1,78 @@
+docker network create --driver bridge --subnet 10.0.0.0/28 littlenet
+----------------------------------------------------------------
+docker run -it -p 9000:9000 -p 9092:9092 -p 22:22 -v C:\dev\cursostec\hadoopbases2\mapr:/home/hadoopuser/mapr --name hadoopserver --net littlenet --ip 10.0.0.2 hadoop
+
+----------------------------------------------------------------
+En otra terminal
+This is an example of how to manually copy files from the host to the container 
+```
+docker cp ejemplobases2.jar hadoopserver:/home/hadoopuser
+docker cp datasales.db  hadoopserver:/home/hadoopuser
+
+docker cp sample.db  hadoopserver:/home/hadoopuser
+docker cp quiz1.jar  hadoopserver:/home/hadoopuser
+docker cp start.sh  hadoopserver:/home/hadoopuser
+
+----------------------------------------------------------------
+su - hadoopuser
+cd /home/hadoopuser
+ssh-keygen -t rsa -P '' -f /home/hadoopuser/.ssh/id_rsa
+ssh-copy-id hadoopuser@localhost
+exit
+----------------------------------------------------------------
+Go to your /home/hadoopuser folder and run the script
+This script needs to be run everytime the container is restarted
+```
+./start.sh 
+
+----------------------------------------------------------------
+
+These are example of instructions to prepare hdfs folders and run a map reduce example
+```
+Ejemplo
+hadoop fs -ls /
+hadoop fs -mkdir /datainput
+hadoop fs -copyFromLocal datasales.db /datainput
+hadoop jar ejemplobases2.jar mapr.maprunner
+----------------------------------------------------------------
+Ejecutar el jar
+hadoop fs -copyFromLocal sample.db /datainput
+hadoop jar quiz1.jar mapr.maprunner
+
+----------------------------------------------------------------
+Ver o borrar los datos del reduce
+
+hadoop fs -rm -r /dataoutput
+hadoop fs -rm -r /tmp
+hadoop fs -cat /dataoutput/part-00000
+
+----------------------------------------------------------------
+To setup the hive environment just run the `hive-setup.sh` script located in hadoopuser home folder
+
+create schema <name>; // to create an schema
+create database bases2;
+
+create table tmp_sales(fecha string, monto decimal(10,2)) row format delimited fields terminated by ',';
+
+load data inpath '/data/input/datasales.dat' into table tmp_sales;
+
+CREATE TABLE IF NOT EXISTS sales ( fecha timestamp, monto decimal(10,2))
+COMMENT 'Ventas por mes por anyo'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE;
+
+insert into table sales select from_unixtime(unix_timestamp(fecha, 'MM/dd/yyyy')), monto from tmp_sales;
+```
+
+Once data is loaded, run some queries to test the performance 
+```
+SELECT MONTH(fecha), YEAR(fecha), SUM(monto) from sales group by YEAR(fecha), MONTH(fecha);
+
+SELECT anyo, MAX(monto) from (
+    SELECT MONTH(fecha) mes, YEAR(fecha) anyo, SUM(monto) monto from sales group by YEAR(fecha), MONTH(fecha)
+) as tabla 
+group by anyo;
+
+----------------------------------------------------------------
